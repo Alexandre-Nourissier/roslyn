@@ -42,6 +42,7 @@ try
     {
         "dev15-rc3" { } 
         "master" { } 
+        "fix-visualstudioworkspace-affinity" { } 
         default
         {
             if (-not $test)
