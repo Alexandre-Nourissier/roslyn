@@ -86,7 +86,6 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.ProjectSystem
         /// A compatibility shim to ensure that F# and TypeScript continue to work after the deferred work goes in. This will be
         /// removed once they move to calling <see cref="GetProjectTrackerAndInitializeIfNecessary"/>.
         /// </summary>
-        [Obsolete("You should use " + nameof(GetProjectTrackerAndInitializeIfNecessary) + " or check through " + nameof(DeferredState))]
         internal VisualStudioProjectTracker ProjectTracker
         {
             get
@@ -178,6 +177,21 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.ProjectSystem
             {
                 return true;
             }
+        }
+
+        internal override bool CanRenameFilesDuringCodeActions(CodeAnalysis.Project project)
+        {
+            if (this.TryGetHierarchy(project.Id, out var hierarchy))
+            {
+                // Currently renaming files in CPS projects (i.e. .Net Core) doesn't work proprey.
+                // This is because the remove/add of the documents in CPS is not synchronous
+                // (despite the DTE interfaces being synchronous).  So Roslyn calls the methods
+                // expecting the changes to happen immediately.  Because they are deferred in CPS
+                // this causes problems. 
+                return !hierarchy.IsCapabilityMatch("CPS");
+            }
+
+            return true;
         }
 
         public override bool CanApplyChange(ApplyChangesKind feature)
